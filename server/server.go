@@ -8,12 +8,14 @@ import (
 	"github.com/divan/gorilla-xmlrpc/xml"
 	"github.com/gorilla/rpc"
 
-	"github.com/Cappi-s/peer-to-peer-rpc/service/hello"
+	"github.com/Cappi-s/peer-to-peer-rpc/service/chat"
 )
 
 type Server struct {
-	Host string
-	Wg   *sync.WaitGroup
+	Host       string
+	Wg         *sync.WaitGroup
+	Peers      map[string]string
+	MyNickname string
 }
 
 func (s *Server) StartServer() {
@@ -21,7 +23,13 @@ func (s *Server) StartServer() {
 	RPC := rpc.NewServer()
 	xmlrpcCoded := xml.NewCodec()
 	RPC.RegisterCodec(xmlrpcCoded, "text/xml")
-	RPC.RegisterService(new(hello.HelloService), "")
+
+	chatService := chat.ChatService{
+		Host:       s.Host,
+		Peers:      s.Peers,
+		MyNickname: s.MyNickname,
+	}
+	RPC.RegisterService(chatService, "")
 
 	http.Handle("/RPC", RPC)
 

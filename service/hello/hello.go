@@ -18,6 +18,7 @@ type Response struct {
 }
 
 func (h *HelloService) Say(r *http.Request, payload *Payload, response *Response) error {
+
 	log.Println("Server: Request received from:", payload.Sender)
 	response.Message = fmt.Sprintf("Hello, %s!", payload.Sender)
 	return nil
