@@ -29,7 +29,7 @@ func (s *Server) StartServer() {
 		Peers:      s.Peers,
 		MyNickname: s.MyNickname,
 	}
-	RPC.RegisterService(chatService, "")
+	RPC.RegisterService(&chatService, "")
 
 	http.Handle("/RPC", RPC)
 

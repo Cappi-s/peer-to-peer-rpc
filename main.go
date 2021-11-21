@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"sync"
 
 	rpcclient "github.com/Cappi-s/peer-to-peer-rpc/client"
@@ -15,27 +14,23 @@ func main() {
 	wg.Add(1)
 
 	peers := map[string]string{
-		"Pedro": "localhost:1234",
-		"Ian":   "localhost:1234",
+		"Diana": "localhosta:1234",
+		"Ian":   "localhosta:1234",
 	}
 	server := server.Server{
 		Host:       "localhost:1234",
 		Wg:         &wg,
 		Peers:      peers,
-		MyNickname: "Diana",
+		MyNickname: "Pedro",
 	}
 	go server.StartServer()
 
-	client := rpcclient.NewClient()
-	reply, err := client.XmlRpcCall("ChatService.SetMessage", &chat.Payload{
-		Sender:  "Diana",
-		Content: "Oi, blz?",
+	client := rpcclient.NewClient(peers)
+	client.SendMessage("ChatService.SetMessage", &chat.Payload{
+		Sender:    "Pedro",
+		Recipient: "Pedro",
+		Content:   "Oi, blz?",
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Response: %s\n", reply.Message)
 
 	wg.Wait()
 }

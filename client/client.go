@@ -10,28 +10,48 @@ import (
 	"github.com/Cappi-s/peer-to-peer-rpc/service/chat"
 )
 
-type Client struct{}
-
-const host = "http://localhost:1234/RPC"
-
-func NewClient() *Client {
-	return &Client{}
+type Client struct {
+	Peers map[string]string
 }
 
-func (c *Client) XmlRpcCall(method string, payload *chat.Payload) (*chat.Response, error) {
-	buf, _ := xml.EncodeClientRequest(method, payload)
+const myHostAddress = "localhost:1234"
 
-	resp, err := http.Post(host, "text/xml", bytes.NewBuffer(buf))
+func NewClient(peers map[string]string) *Client {
+	return &Client{
+		Peers: peers,
+	}
+}
+
+func (c *Client) SendMessage(method string, payload *chat.Payload) {
+	payload.AlreadyContacted = map[string]string{
+		"Pedro": myHostAddress,
+	}
+
+	for nick, hostAddress := range c.Peers {
+		if nick == payload.Recipient {
+			go c.XmlRpcCall(hostAddress, method, payload)
+			return
+		}
+	}
+
+	for _, hostAddress := range c.Peers {
+		go c.XmlRpcCall(hostAddress, method, payload)
+	}
+}
+
+func (c *Client) XmlRpcCall(hostAddress string, method string, payload *chat.Payload) {
+	buf, _ := xml.EncodeClientRequest(method, payload)
+	resp, err := http.Post("http://"+hostAddress+"/RPC", "text/xml", bytes.NewBuffer(buf))
 	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
+		fmt.Printf("error sending request: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	var response chat.Response
+
 	err = xml.DecodeClientResponse(resp.Body, &response)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
+		fmt.Printf("error decoding response: %v", err)
 	}
-
-	return &response, nil
 }

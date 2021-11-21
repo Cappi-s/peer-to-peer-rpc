@@ -3,7 +3,6 @@ package chat
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/divan/gorilla-xmlrpc/xml"
@@ -22,13 +21,15 @@ type Payload struct {
 	AlreadyContacted map[string]string
 }
 
-type Response struct {
-	Message string
-}
+type Response struct{}
 
 func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Response) error {
 
-	log.Println("Server: Request received from:", payload.Sender)
+	fmt.Println("Server: Request received from:", payload.Sender)
+
+	if payload.AlreadyContacted == nil {
+		payload.AlreadyContacted = make(map[string]string)
+	}
 
 	// Adiciona peers que não temos como contato na lista
 	for nick, address := range payload.AlreadyContacted {
@@ -37,7 +38,7 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 
 	// Sou o destinatário, exibe a mensangem
 	if payload.Recipient == c.MyNickname {
-		fmt.Printf("%s: %s", payload.Sender, payload.Content)
+		fmt.Printf("%s: %s\n", payload.Sender, payload.Content)
 		return nil
 	}
 
