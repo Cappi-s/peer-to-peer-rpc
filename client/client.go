@@ -2,7 +2,9 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/divan/gorilla-xmlrpc/xml"
@@ -25,23 +27,34 @@ func NewClient(myAddress string, myNickName string, peers map[string]string) *Cl
 }
 
 func (c *Client) SendMessage(method string, payload *chat.Payload) {
-	payload.AlreadyContacted = make(map[string]string)
-	payload.AlreadyContacted[c.MyNickname] = c.MyAddress
+	alreadyContacted := make(map[string]string)
+	alreadyContacted[c.MyNickname] = c.MyAddress
+
+	res, err := json.Marshal(alreadyContacted)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	payload.AlreadyContacted = string(res)
 
 	for nick, hostAddress := range c.Peers {
 		if nick == payload.Recipient {
+			fmt.Println("entrou aqui: ", payload.Recipient)
 			go c.XmlRpcCall(hostAddress, method, payload)
 			return
 		}
 	}
 
 	for _, hostAddress := range c.Peers {
+		fmt.Println("entrou aqui")
 		go c.XmlRpcCall(hostAddress, method, payload)
 	}
 }
 
 func (c *Client) XmlRpcCall(hostAddress string, method string, payload *chat.Payload) {
 	buf, _ := xml.EncodeClientRequest(method, payload)
+
+	fmt.Println("payload: ", string(buf))
 	resp, err := http.Post(hostAddress+"/RPC", "text/xml", bytes.NewBuffer(buf))
 	if err != nil {
 		fmt.Printf("error sending request: %v", err)
