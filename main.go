@@ -13,13 +13,9 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	/*peers := map[string]string{
+	peers := map[string]string{
 		"Diana": "http://aeb1-5-62-49-126.ngrok.io",
 		"Ian":   "http://1ca6-200-196-135-247.ngrok.io",
-	}*/
-	peers := map[string]string{
-		"Diana": "http://localhost:1234",
-		"Ian":   "http://localhost:1234",
 	}
 
 	const (
@@ -35,13 +31,16 @@ func main() {
 	}
 	go server.StartServer()
 
-	//time.Sleep(time.Second * 5)
-
 	client := rpcclient.NewClient(HOST, NICKNAME, peers)
 	client.SendMessage("ChatService.SetMessage", &chat.Payload{
 		Sender:    NICKNAME,
 		Recipient: "Ian",
-		Content:   "Oi, didu, tudo bem?",
+		Content:   "Oi, ian, tudo bem?",
+	})
+	client.SendMessage("ChatService.SetMessage", &chat.Payload{
+		Sender:    NICKNAME,
+		Recipient: "Diana",
+		Content:   "Oi, diana, tudo bem?",
 	})
 
 	wg.Wait()

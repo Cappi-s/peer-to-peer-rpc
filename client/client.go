@@ -39,14 +39,12 @@ func (c *Client) SendMessage(method string, payload *chat.Payload) {
 
 	for nick, hostAddress := range c.Peers {
 		if nick == payload.Recipient {
-			fmt.Println("entrou aqui: ", payload.Recipient)
 			go c.XmlRpcCall(hostAddress, method, payload)
 			return
 		}
 	}
 
 	for _, hostAddress := range c.Peers {
-		fmt.Println("entrou aqui")
 		go c.XmlRpcCall(hostAddress, method, payload)
 	}
 }
@@ -54,7 +52,6 @@ func (c *Client) SendMessage(method string, payload *chat.Payload) {
 func (c *Client) XmlRpcCall(hostAddress string, method string, payload *chat.Payload) {
 	buf, _ := xml.EncodeClientRequest(method, payload)
 
-	fmt.Println("payload: ", string(buf))
 	resp, err := http.Post(hostAddress+"/RPC", "text/xml", bytes.NewBuffer(buf))
 	if err != nil {
 		fmt.Printf("error sending request: %v", err)

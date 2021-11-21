@@ -26,11 +26,6 @@ type Payload struct {
 type Response struct{}
 
 func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Response) error {
-
-	fmt.Println("Server: Request received from:", payload.Sender)
-
-	fmt.Println("ccc: ", payload.AlreadyContacted)
-
 	alreadyContacted := make(map[string]string)
 
 	err := json.Unmarshal([]byte(payload.AlreadyContacted), &alreadyContacted)
@@ -56,12 +51,9 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 	// Se adiciona na lista de pessoas que já receberam esta mensagem
 	alreadyContacted[c.MyNickname] = c.Host
 
-	fmt.Println("pessoas que já receberam a msg: ", alreadyContacted)
-
 	// Se temos o destinatário na lista de contatos, enviamos a mensagem para ela
 	hostAddress, ok := c.Peers[payload.Recipient]
 	if ok {
-		fmt.Println("enviando para: ", payload.Recipient)
 		c.XmlRpcCall(hostAddress, "ChatService.SetMessage", payload)
 		return nil
 	}
