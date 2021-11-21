@@ -2,10 +2,12 @@ package main
 
 import (
 	"sync"
+	"time"
 
-	rpcclient "github.com/Cappi-s/peer-to-peer-rpc/client"
 	"github.com/Cappi-s/peer-to-peer-rpc/server"
 	"github.com/Cappi-s/peer-to-peer-rpc/service/chat"
+
+	rpcclient "github.com/Cappi-s/peer-to-peer-rpc/client"
 )
 
 func main() {
@@ -14,22 +16,30 @@ func main() {
 	wg.Add(1)
 
 	peers := map[string]string{
-		"Diana": "localhosta:1234",
-		"Ian":   "localhosta:1234",
+		"Diana": "aeb1-5-62-49-126.ngrok.io",
+		"Ian":   "1ca6-200-196-135-247.ngrok.io",
 	}
+
+	const (
+		HOST     = "http://localhost:1234"
+		NICKNAME = "Pedro"
+	)
+
 	server := server.Server{
-		Host:       "localhost:1234",
+		Host:       HOST,
 		Wg:         &wg,
 		Peers:      peers,
-		MyNickname: "Pedro",
+		MyNickname: NICKNAME,
 	}
 	go server.StartServer()
 
-	client := rpcclient.NewClient(peers)
+	time.Sleep(time.Second * 5)
+
+	client := rpcclient.NewClient(HOST, NICKNAME, peers)
 	client.SendMessage("ChatService.SetMessage", &chat.Payload{
-		Sender:    "Pedro",
-		Recipient: "Pedro",
-		Content:   "Oi, blz?",
+		Sender:    NICKNAME,
+		Recipient: "Diana",
+		Content:   "Oi, didu, tudo bem?",
 	})
 
 	wg.Wait()

@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/divan/gorilla-xmlrpc/xml"
@@ -34,6 +35,6 @@ func (s *Server) StartServer() {
 	http.Handle("/RPC", RPC)
 
 	log.Printf("Server: Starting XML-RPC server on %s/RPC", s.Host)
-	log.Println(http.ListenAndServe(s.Host, nil))
+	log.Println(http.ListenAndServe(strings.Split(s.Host, "http://")[1], nil))
 	s.Wg.Done()
 }

@@ -48,8 +48,7 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 	// Se temos o destinatário na lista de contatos, enviamos a mensagem para ela
 	hostAddress, ok := c.Peers[payload.Recipient]
 	if ok {
-		_, err := c.XmlRpcCall(hostAddress, "ChatService.SetMessage", payload)
-		return err
+		c.XmlRpcCall(hostAddress, "ChatService.SetMessage", payload)
 	}
 
 	//  Propaga a mensagem para todos os contatos conhecidos por mim que ainda não receberam esta mensagem
@@ -58,27 +57,25 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 			continue
 		}
 
-		_, err := c.XmlRpcCall(peerAddress, "ChatService.SetMessage", payload)
-		return err
+		c.XmlRpcCall(peerAddress, "ChatService.SetMessage", payload)
 	}
 
 	return nil
 }
 
-func (c *ChatService) XmlRpcCall(host string, method string, payload *Payload) (*Response, error) {
+func (c *ChatService) XmlRpcCall(hostAddress string, method string, payload *Payload) {
 	buf, _ := xml.EncodeClientRequest(method, payload)
-
-	resp, err := http.Post(host, "text/xml", bytes.NewBuffer(buf))
+	resp, err := http.Post("http://"+hostAddress+"/RPC", "text/xml", bytes.NewBuffer(buf))
 	if err != nil {
-		return nil, fmt.Errorf("error sending request: %w", err)
+		fmt.Printf("error sending request: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	var response Response
+
 	err = xml.DecodeClientResponse(resp.Body, &response)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
+		fmt.Printf("error decoding response: %v", err)
 	}
-
-	return &response, nil
 }
