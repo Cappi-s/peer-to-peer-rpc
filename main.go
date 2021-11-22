@@ -28,8 +28,8 @@ func main() {
 	peerList := strings.Split(string(bytes), "\n")
 	peers := make(map[string]string)
 	for i, peerString := range peerList {
-		fmt.Println(peerString)
-		splited := strings.Split(peerString, " ")
+		clean := strings.Split(peerString, "\r")[0]
+		splited := strings.Split(clean, " ")
 
 		if len(splited) < 2 {
 			continue
