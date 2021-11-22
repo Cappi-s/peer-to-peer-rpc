@@ -1,13 +1,12 @@
 package chat
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/divan/gorilla-xmlrpc/xml"
+	"github.com/Cappi-s/peer-to-peer-rpc/util"
 )
 
 type ChatService struct {
@@ -27,7 +26,6 @@ type Response struct{}
 
 func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Response) error {
 	alreadyContacted := make(map[string]string)
-
 	err := json.Unmarshal([]byte(payload.AlreadyContacted), &alreadyContacted)
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +42,7 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 
 	// Sou o destinatário, exibe a mensangem
 	if payload.Recipient == c.MyNickname {
-		fmt.Printf("%s: %s\n", payload.Sender, payload.Content)
+		fmt.Printf("\n%s: %s\n\n", payload.Sender, payload.Content)
 		return nil
 	}
 
@@ -54,7 +52,7 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 	// Se temos o destinatário na lista de contatos, enviamos a mensagem para ela
 	hostAddress, ok := c.Peers[payload.Recipient]
 	if ok {
-		c.XmlRpcCall(hostAddress, "ChatService.SetMessage", payload)
+		util.XmlRpcCall(hostAddress, "ChatService.SetMessage", payload)
 		return nil
 	}
 
@@ -72,25 +70,8 @@ func (c *ChatService) SetMessage(r *http.Request, payload *Payload, response *Re
 
 		payload.AlreadyContacted = string(res)
 
-		c.XmlRpcCall(peerAddress, "ChatService.SetMessage", payload)
+		util.XmlRpcCall(peerAddress, "ChatService.SetMessage", payload)
 	}
 
 	return nil
-}
-
-func (c *ChatService) XmlRpcCall(hostAddress string, method string, payload *Payload) {
-	buf, _ := xml.EncodeClientRequest(method, payload)
-	resp, err := http.Post(hostAddress+"/RPC", "text/xml", bytes.NewBuffer(buf))
-	if err != nil {
-		fmt.Printf("error sending request: %v", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	var response Response
-
-	err = xml.DecodeClientResponse(resp.Body, &response)
-	if err != nil {
-		fmt.Printf("error decoding response: %v", err)
-	}
 }

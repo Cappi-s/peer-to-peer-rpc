@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
 	"sync"
 
 	rpcclient "github.com/Cappi-s/peer-to-peer-rpc/client"
 	"github.com/Cappi-s/peer-to-peer-rpc/server"
-	"github.com/Cappi-s/peer-to-peer-rpc/service/chat"
 )
 
 func main() {
@@ -13,35 +18,51 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	peers := map[string]string{
-		"Diana": "http://aeb1-5-62-49-126.ngrok.io",
-		"Ian":   "http://1ca6-200-196-135-247.ngrok.io",
+	bytes, err := ioutil.ReadFile("peers")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	const (
-		HOST     = "http://e509-2804-56c-ffc1-c200-b1d8-ea68-f0e6-35bd.ngrok.io"
-		NICKNAME = "Pedro"
-	)
+	var host, nickname string
+
+	peerList := strings.Split(string(bytes), "\n")
+	peers := make(map[string]string)
+	for i, peerString := range peerList {
+		clean := strings.Split(peerString, "\r")[0]
+		splited := strings.Split(clean, " ")
+		nick := splited[0]
+		address := splited[1]
+
+		if i == 0 {
+			host = address
+			nickname = nick
+			continue
+		}
+
+		peers[nick] = address
+	}
 
 	server := server.Server{
-		Host:       HOST,
+		Host:       host,
 		Wg:         &wg,
 		Peers:      peers,
-		MyNickname: NICKNAME,
+		MyNickname: nickname,
 	}
 	go server.StartServer()
-
-	client := rpcclient.NewClient(HOST, NICKNAME, peers)
-	client.SendMessage("ChatService.SetMessage", &chat.Payload{
-		Sender:    NICKNAME,
-		Recipient: "Ian",
-		Content:   "Oi, ian, tudo bem?",
-	})
-	client.SendMessage("ChatService.SetMessage", &chat.Payload{
-		Sender:    NICKNAME,
-		Recipient: "Diana",
-		Content:   "Oi, diana, tudo bem?",
-	})
-
 	wg.Wait()
+
+	client := rpcclient.NewClient(host, nickname, peers)
+
+	fmt.Println("Format: RecipientName Message")
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Println("Send Message: ")
+		scanner.Scan()
+		text := scanner.Text()
+		splited := strings.Split(text, " ")
+		nick := splited[0]
+		message := strings.Join(splited[1:], " ")
+
+		client.SendMessage(nick, message)
+	}
 }

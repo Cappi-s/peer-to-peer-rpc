@@ -34,6 +34,6 @@ func (s *Server) StartServer() {
 	http.Handle("/RPC", RPC)
 
 	log.Printf("Server: Starting XML-RPC server on %s/RPC", s.Host)
-	log.Println(http.ListenAndServe("localhost:1234", nil))
 	s.Wg.Done()
+	log.Println(http.ListenAndServe("localhost:1234", nil))
 }

@@ -1,15 +1,11 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
-	"net/http"
-
-	"github.com/divan/gorilla-xmlrpc/xml"
 
 	"github.com/Cappi-s/peer-to-peer-rpc/service/chat"
+	"github.com/Cappi-s/peer-to-peer-rpc/util"
 )
 
 type Client struct {
@@ -26,7 +22,7 @@ func NewClient(myAddress string, myNickName string, peers map[string]string) *Cl
 	}
 }
 
-func (c *Client) SendMessage(method string, payload *chat.Payload) {
+func (c *Client) SendMessage(recipient string, content string) {
 	alreadyContacted := make(map[string]string)
 	alreadyContacted[c.MyNickname] = c.MyAddress
 
@@ -35,34 +31,21 @@ func (c *Client) SendMessage(method string, payload *chat.Payload) {
 		log.Fatal(err)
 	}
 
-	payload.AlreadyContacted = string(res)
+	payload := chat.Payload{
+		Sender:           c.MyNickname,
+		Recipient:        recipient,
+		Content:          content,
+		AlreadyContacted: string(res),
+	}
 
 	for nick, hostAddress := range c.Peers {
 		if nick == payload.Recipient {
-			go c.XmlRpcCall(hostAddress, method, payload)
+			go util.XmlRpcCall(hostAddress, "ChatService.SetMessage", &payload)
 			return
 		}
 	}
 
 	for _, hostAddress := range c.Peers {
-		go c.XmlRpcCall(hostAddress, method, payload)
-	}
-}
-
-func (c *Client) XmlRpcCall(hostAddress string, method string, payload *chat.Payload) {
-	buf, _ := xml.EncodeClientRequest(method, payload)
-
-	resp, err := http.Post(hostAddress+"/RPC", "text/xml", bytes.NewBuffer(buf))
-	if err != nil {
-		fmt.Printf("error sending request: %v", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	var response chat.Response
-
-	err = xml.DecodeClientResponse(resp.Body, &response)
-	if err != nil {
-		fmt.Printf("error decoding response: %v", err)
+		go util.XmlRpcCall(hostAddress, "ChatService.SetMessage", &payload)
 	}
 }
