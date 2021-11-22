@@ -28,8 +28,13 @@ func main() {
 	peerList := strings.Split(string(bytes), "\n")
 	peers := make(map[string]string)
 	for i, peerString := range peerList {
-		clean := strings.Split(peerString, "\r")[0]
-		splited := strings.Split(clean, " ")
+		fmt.Println(peerString)
+		splited := strings.Split(peerString, " ")
+
+		if len(splited) < 2 {
+			continue
+		}
+
 		nick := splited[0]
 		address := splited[1]
 
